@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using ChatApplication.Models;
+using ChatApplication.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChatApplication.Controllers

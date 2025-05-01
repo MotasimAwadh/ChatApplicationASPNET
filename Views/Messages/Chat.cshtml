@@ -1,0 +1,198 @@
+﻿@using ChatApplication.Models.ViewModels.MessagesViewModels
+@model ChatVM
+
+<style>
+	.receiver-info {
+		display: flex;
+		align-items: center;
+		margin-bottom: 20px;
+		padding: 20px;
+		background-color: #e6e6e6;
+	}
+
+	.receiver-info .first-letter {
+		width: 60px;
+		height: 60px;
+		border-radius: 50%;
+		background-color: darkblue;
+		color: white;
+		font-size: 35px;
+		margin-right: 10px;
+		text-align: center;
+	}
+
+	.messages-box {
+		display: flex;
+		flex-direction: column;
+		background-color: #e6e6e6;
+		height: 75vh;
+		overflow: auto;
+		padding: 20px;
+	}
+
+	.message {
+		padding: 20px;
+		background-color: #e6e6e6;
+		color: white;
+		border-radius: 30px;
+		margin-bottom: 10px;
+		max-width: 80%;
+	}
+
+	.sent-message {
+		background-color: darkblue;
+		align-self: start;
+	}
+
+	.received-message {
+		align-self: end;
+		background-color: darkred;
+	}
+
+	.send-message-box {
+		display: flex;
+		margin-top: 20px;
+	}
+
+	.message-feild {
+		flex: 1;
+		border-radius: 0;
+		border: none;
+		background-color: #e6e6e6;
+		padding: 10px;
+	}
+
+	.message-feild:focus {
+		outline: none;
+	}
+
+	.send-btn {
+		border-radius: 0;
+	}
+</style>
+
+<div class="message-wrap">
+	<div class="reciver-info">
+		@* Get first letter of user name to display as a image *@
+		@Model.ReciverUserName.Substring(0, 1).ToUpper()
+	</div>
+	<h3>@Model.ReciverUserName</h3>
+</div>
+
+<div class="messages-box">
+	@foreach (var message in Model.Messages)
+	{
+		if (message.IsCurrentUserSentMessage)
+		{
+			@* Current user message *@
+			<div class="message sent-message">
+				<p>@message.Text</p>
+				<span>@message.Date @message.Time</span>
+			</div>
+		}
+		else
+		{
+			@* Reciver message *@
+			<div class="message received-message">
+				<p>@message.Text</p>
+				<span>@message.Date @message.Time</span>
+			</div>
+		}
+	}
+</div>
+
+<div class="send-message-box">
+	<textarea id="messageField" rows="4" class="message-feild" placeholder="Type your message..."></textarea>
+	<button id="sendButton" class="send-btn btn btn-dark" disabled>Send</button>
+</div>
+
+@section Scripts {
+	<script>
+
+		document.addEventListener('DOMContentLoaded', function() {
+		  const messageField = document.getElementById('messageField');
+		  const sendButton = document.getElementById('sendButton');
+
+		  // Function to check if textarea is empty and update button state
+		  function updateButtonState() {
+			// Trim whitespace to ensure spaces don't count as content
+			if (messageField.value.trim() === '') {
+			  sendButton.disabled = true;
+			} else {
+			  sendButton.disabled = false;
+			}
+		  }
+
+		  // Initial button state
+		  updateButtonState();
+
+		  // Listen for input events on the textarea
+		  messageField.addEventListener('input', updateButtonState);
+
+		  // Optional: Listen for keydown events (like Enter) to submit
+		  messageField.addEventListener('keydown', function(e) {
+			if (e.key === 'Enter' && !e.shiftKey && !sendButton.disabled) {
+			  e.preventDefault(); // Prevent new line
+			  // Send message logic here
+			  sendButton.click();
+			}
+		  });
+
+		  // Handle button click to send message and reset state
+		  sendButton.addEventListener('click', function() {
+			// Your send message logic would go here
+
+			// After sending, clear the textarea and update button state
+			messageField.value = '';
+			updateButtonState();
+		  });
+		});
+
+
+
+		// build signalR connection
+		var connection = new signalR.HubConnectionBuilder()
+			.withUrl("/chatHub")
+			.build();
+
+		// start the connection
+		connection.start().then(function () {
+			console.log("SignalR connection started");
+		}).catch(function (err) {
+			return console.error(err.toString());
+		});
+
+		$(".send-btn").click(function () {
+			var receivedId = "@Model.ReciverId";
+			var message = $(".message-feild").val();
+
+			// Invoke ChatHub SendMessage function
+			connection.invoke("SendMessage", receivedId, message);
+			$(".message-feild").val("").focus();
+		});
+
+		connection.on("ReceiveMessage", function(message, date, time, senderId) {
+			var messge = ``;
+			if (senderId == "@Model.CurrentUserId") {
+				messge = `<div class="message sent-message">
+					<p>${message}</p>
+					<span>${time}</span>
+				</div>`;
+			} else {
+				messge = `<div class="message received-message">
+					<p>${message}</p>
+					<span>${date} ${time}</span>
+				</div>`;
+			}
+
+			$(".messages-box").append(messge);
+			$(".messages-box").scrollTop($(".messages-box")[0].scrollHeight);
+		});
+
+		$(function () {
+			// Go to last message
+			$(".messages-box").scrollTop($(".messages-box")[0].scrollHeight);
+		});
+
+	</script>
+}
