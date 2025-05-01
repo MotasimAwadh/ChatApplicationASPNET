@@ -50,11 +50,28 @@ namespace ChatApplication.Messages.Service
             return chatVM;
         }
 
-        public async Task<IEnumerable<MessagesUsersListVM>> GetUsers()
+        public async Task<IEnumerable<MessagesUsersListVM>> GetUsers(bool myChatsOnly = false)
         {
             var currentUserId = _currentUserService.UserId;
+            List<MessagesUsersListVM> users;
+            if (myChatsOnly)
+            {
+                // here need fix
+                users = await _db.Users.Where(i => i.Id != currentUserId)
+                    .Where(i => _db.Messages.Any(m =>
+                        (m.SenderId == currentUserId && m.ReceiverId == i.Id) ||
+                        (m.SenderId == i.Id && m.ReceiverId == currentUserId)))
+                    .Select(i => new MessagesUsersListVM()
+                    {
+                        Id = i.Id,
+                        UserName = i.UserName,
+                        LastMessage = _db.Messages.Where(m => (m.SenderId == currentUserId || m.SenderId == i.Id) && (m.ReceiverId == currentUserId || m.ReceiverId == i.Id)).OrderByDescending(m => m.Id).Select(m => m.Text).FirstOrDefault(),
+                    }).ToListAsync();
 
-            var users = await _db.Users.Where(i => i.Id != currentUserId).Select(i => new MessagesUsersListVM()
+                return users;
+            }
+
+            users = await _db.Users.Where(i => i.Id != currentUserId).Select(i => new MessagesUsersListVM()
             {
                 Id = i.Id,
                 UserName = i.UserName,

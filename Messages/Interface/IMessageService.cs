@@ -4,7 +4,7 @@ namespace ChatApplication.Messages.Interface
 {
     public interface IMessageService
     {
-        Task<IEnumerable<MessagesUsersListVM>> GetUsers();
+        Task<IEnumerable<MessagesUsersListVM>> GetUsers(bool myChatsOnly = false);
         Task<ChatVM> GetMessages(string selectedUserId);
     }
 }
