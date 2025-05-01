@@ -102,7 +102,7 @@
 </div>
 
 <div class="send-message-box">
-	<textarea id="messageField" rows="4" class="message-feild" placeholder="Type your message..."></textarea>
+	<textarea id="messageField" rows="2" class="message-feild" placeholder="Type your message..."></textarea>
 	<button id="sendButton" class="send-btn btn btn-dark" disabled>Send</button>
 </div>
 
@@ -128,15 +128,6 @@
 
 		  // Listen for input events on the textarea
 		  messageField.addEventListener('input', updateButtonState);
-
-		  // Optional: Listen for keydown events (like Enter) to submit
-		  messageField.addEventListener('keydown', function(e) {
-			if (e.key === 'Enter' && !e.shiftKey && !sendButton.disabled) {
-			  e.preventDefault(); // Prevent new line
-			  // Send message logic here
-			  sendButton.click();
-			}
-		  });
 
 		  // Handle button click to send message and reset state
 		  sendButton.addEventListener('click', function() {
